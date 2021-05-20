@@ -41,6 +41,7 @@ deltaX = 0
 deltaY = 0
 info = None
 direction = 1 # this is the index in the directions array
+againstWall = False
 
 def update():
     global xPos, yPos, deltaX, deltaY
@@ -54,9 +55,16 @@ def update():
     
 def increment():
     global info
-    for x in range(20):  # change this number for speed of play, lowest 20
+    for x in range(50):  # change this number for speed of play, lowest 20
         ob, rew, done, info = env.step(empty)
         env.render()
+        
+def waitForAnimation():
+    global info
+    for x in range(2000):  # change this number for speed of play, lowest 20
+        ob, rew, done, info = env.step(empty)
+        env.render()
+    
     
 def step(direction):
     global info
@@ -69,14 +77,18 @@ def step(direction):
     #print("change x y is %d %d" % (deltaX/tile, deltaY/tile))
 
 while True:
-    step(direction)
-    
+    if (not againstWall):
+        step(direction)
     if (abs(deltaX) > tile and abs(deltaY) > tile):
         print("went through a door: deltaX is %d and deltaY is %d" % (deltaX/tile, deltaY/tile))
-    elif (abs(deltaX) > tile or abs(deltaY) > tile):
-        print("jumped: deltaX is %d and deltaY is %d" % (deltaX/tile, deltaY/tile))
+        againstWall = False
+        waitForAnimation()
+    #elif (abs(deltaX) > tile or abs(deltaY) > tile):
+        #print("jumped: deltaX is %d and deltaY is %d" % (deltaX/tile, deltaY/tile))
+        #againstWall = False
     elif (deltaX==0 and deltaY==0):
         print("did not move, changing direction")
+        againstWall = True
         direction = (direction + 1) % len(directions) #random.randint(len(directions))
         step(direction) # this one is to rotate
         step(direction) # this one is to move
@@ -91,12 +103,16 @@ while True:
             # check for dialog
             if (deltaX==0 and deltaY==0):
                 print("could not turn back where I came from, will press A")
+                againstWall = False
                 ob, rew, done, info = env.step(aButton)
-                increment()
-                increment()
-                increment()
-                increment()
+                waitForAnimation()
                 # lol
+    else:
+        # normal going straight stuff
+        # rotate backwards and nudge the edge of the wall
+        direction = ((direction - 1) + len(directions)) % len(directions)
+        step(direction) # to rotate
+        step(direction) # to move
     
 
 
