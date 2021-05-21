@@ -2,6 +2,7 @@
 
 import time
 import random
+import operator
 
 from pathfinding.core.diagonal_movement import DiagonalMovement
 from pathfinding.core.grid import Grid
@@ -28,13 +29,20 @@ class World:
         # '?' is an unknown square, 'P' is the player's current position, 'W' is a warp 
         # 'B' is a 'block' - impassible square, "D" means sign or sprite (opens dialogue box when clicked)
         # 'S' is a 'safe' square - player can move on it freely
-        self.origin = [0, 0]
-        self.map = [["?","?","?"],["?","P","?"],["?","?","?"]]
-        self.frontier = [(0, 1), (1, 0), (1, 2), (2, 1)]
-        self.goal = [1, 2]
-        self.path = None
-        self.playerRow = 1
-        self.playerCol = 1
+        self.origin = [1, 1]
+        self.map = [["?","?","?"],["?","X","?"],["?","?","?"]]
+        self.frontier = { (0, 1) }
+        self.goal = None
+        self.playerRow = 0
+        self.playerCol = 0
+        
+    # most coordinates are with respect to the player starting position as 0,0
+    # first coordinate is always the row and second the column
+    # to convert this to the map coordinates, we translate by the location of the player start (origin)
+    def toMap(self, rowCol):
+        return (rowCol[0]+self.origin[0], rowCol[1]+self.origin[1])
+    def fromMap(self, rowCol):
+        return (rowCol[0]-self.origin[0], rowCol[1]-self.origin[1])
 
     def printMap(self):
         for row in self.map:
@@ -42,33 +50,43 @@ class World:
             for entry in row: 
                 print(entry, end = " "),
         print("\n")
+        
+    def printMatrix(self, matrix):
+        for row in matrix:
+            print("\n", end =" "),
+            for entry in row: 
+                print(entry, end = " "),
+        print("\n")
 
     def cost(self, item):
         if (item=='?'):
-            return 2
+            return 1
         elif (item=='S' or item=='P'):
             return 1
-        elif (item=='B'):
+        elif (item=='B' or item=='X'):
             return 0
         else:
             return -1
         
     # return array of directions needed to move to the goal
+    # NOTE: uses col row order instead of row col!
     def pathfind(self):
         # convert map to cost matrix
         matrix = [ [ self.cost(item) for item in row ] for row in self.map ]
+        #self.printMatrix(matrix)
         # input to pathfinding algorithm
         grid = Grid(matrix=matrix)
         # determine start and end
-        start = grid.node(self.playerRow+self.origin[0], self.playerCol+self.origin[1])
-        end = grid.node(self.goal[0]+self.origin[0], self.goal[1]+self.origin[1])
+        startRow, startCol = self.toMap((self.playerRow, self.playerCol))
+        endRow, endCol = self.toMap(self.goal)
+        start = grid.node(startCol, startRow)
+        end = grid.node(endCol, endRow)
         finder = AStarFinder(diagonal_movement=DiagonalMovement.never)
         path, runs = finder.find_path(start, end, grid)
         return path
 
     def directionTo(self, position):
-        rowDiff = position[0] - (self.playerRow + self.origin[0])
-        colDiff = position[1] - (self.playerCol + self.origin[1])
+        rowDiff, colDiff = tuple(map(operator.sub, position, self.toMap((self.playerRow, self.playerCol))))
         if (rowDiff==0 and colDiff==1):
             return 0
         elif (rowDiff==1 and colDiff==0):
@@ -84,14 +102,17 @@ class World:
         # choose where to go based on the map
         while (self.goal==None or (self.playerRow==self.goal[0] and self.playerCol==self.goal[1])):
             # grab from the frontier
-            print("new goal")
             self.goal = self.frontier.pop()
         # pathfind to goal
-        self.path = self.pathfind()
+        path = self.pathfind()
+        while (len(path)==0):
+            # grab from the frontier
+            self.goal = self.frontier.pop()
+            path = self.pathfind()
         # get next step
-        newPosition = self.path.pop(1)
+        (c,r) = path.pop(1)
         # determine direction to next step
-        newDirection = self.directionTo(newPosition)
+        newDirection = self.directionTo((r,c))
         # flag changingDirection if so
         if (newDirection!=self.direction):
             self.changingDirection = True
@@ -109,33 +130,68 @@ class World:
         else:
             return (-1, 0)
     
+    def addFrontier(self, row, col):
+        mapRow, mapCol = self.toMap((row, col))
+        tile = self.map[mapRow][mapCol]
+        if (tile=='?'):
+            self.frontier.add((row, col))
+        
+    def removeFrontier(self, row, col):
+        self.frontier.discard((row, col))
+        # remove goal if it is impossible
+        if (self.goal[0]==row and self.goal[1]==col):
+            self.goal = None
+    
     def expandMap(self, direction):
-        if (self.direction==0 and self.playerCol==len(self.map[0])-1-self.origin[1]):
-            # add element at end of each row
-            for row in self.map:
-                row.append('?')
-            # player position does not change
-        elif (self.direction==1 and self.playerRow==len(self.map)-1-self.origin[0]):
-            # add new row at end
-            self.map.append(['?']*len(self.map[0]))
-            # player position does not change
-        elif (self.direction==2 and self.playerCol==self.origin[1]):
-            # add element at start of each row
-            for row in self.map:
-                row.insert(0, '?')
-            # shift map origin column by one
-            self.origin[1] += 1
-        elif (self.playerRow==self.origin[0]):
-            # add new row at beginning
-            self.map.insert(0, ['?']*len(self.map[0]))
-            # shift map origin row by one
-            self.origin[0] += 1
-            
+        # convert to map coordinates
+        mapPlayerRow, mapPlayerCol = self.toMap((self.playerRow, self.playerCol))
+        if (self.direction==0):
+            if (mapPlayerCol==len(self.map[0])-1):
+                # add element at end of each row
+                for row in self.map:
+                    row.append('?')
+                # player position does not change
+            # add up, right, down to frontier if not already visited
+            self.addFrontier(self.playerRow-1, self.playerCol)
+            self.addFrontier(self.playerRow, self.playerCol+1)
+            self.addFrontier(self.playerRow+1, self.playerCol)
+        elif (self.direction==1):
+            if (mapPlayerRow==len(self.map)-1):
+                # add new row at end
+                self.map.append(['?']*len(self.map[0]))
+                # player position does not change
+            # add left, down, right to frontier if not already visited
+            self.addFrontier(self.playerRow, self.playerCol-1)
+            self.addFrontier(self.playerRow+1, self.playerCol)
+            self.addFrontier(self.playerRow, self.playerCol+1)
+        elif (self.direction==2):
+            if (mapPlayerCol==0):
+                # add element at start of each row
+                for row in self.map:
+                    row.insert(0, '?')
+                # shift map origin column by one
+                self.origin[1] += 1
+            # add up, left, down to frontier if not already visited
+            self.addFrontier(self.playerRow-1, self.playerCol)
+            self.addFrontier(self.playerRow, self.playerCol-1)
+            self.addFrontier(self.playerRow+1, self.playerCol)
+        elif (self.direction==3):
+            if (mapPlayerRow==0):
+                # add new row at beginning
+                self.map.insert(0, ['?']*len(self.map[0]))
+                # shift map origin row by one
+                self.origin[0] += 1
+            # add left, up, right to frontier if not already visited
+            self.addFrontier(self.playerRow, self.playerCol-1)
+            self.addFrontier(self.playerRow-1, self.playerCol)
+            self.addFrontier(self.playerRow, self.playerCol+1)
 
     def update(self, x, y):
         deltaRow, deltaCol = self.directionDelta(self.direction)
         expectedX, expectedY = self.x + deltaCol, self.y - deltaRow # convert between x,y and row,col
         pRow, pCol = self.playerRow + deltaRow, self.playerCol + deltaCol
+        mapPlayerRow, mapPlayerCol = self.toMap((self.playerRow, self.playerCol))
+        mapRow, mapCol = self.toMap((pRow, pCol))
         self.prevX = self.x
         self.prevY = self.y
         self.x = x
@@ -147,18 +203,23 @@ class World:
             #print("delt xy: %d, %d" % (deltaCol, -deltaRow))
             #print("curr xy: %d, %d" % (self.x, self.y))
             #print("moved as expected")
-            self.map[self.playerRow+self.origin[0]][self.playerCol+self.origin[1]] = 'S'
-            self.map[pRow+self.origin[0]][pCol+self.origin[1]] = 'P'
+            if (self.map[mapPlayerRow][mapPlayerCol]!='X'):
+                self.map[mapPlayerRow][mapPlayerCol] = 'S'
+            if (self.map[mapRow][mapCol]!='X'):
+                self.map[mapRow][mapCol] = 'P'
             self.playerRow = pRow
             self.playerCol = pCol
             self.expandMap(self.direction) # add a row/column based on movement
         else:
-            #print("hit something")
+            print("hit something")
             # there is a wall where you wanted to go
-            self.map[pRow+self.origin[0]][pCol+self.origin[1]] = 'B'
+            if (self.map[mapRow][mapCol]!='X'):
+                self.map[mapRow][mapCol] = 'B'
+            # remove this from the frontier
+            self.removeFrontier(pRow, pCol)
             # pick a new direction
-            self.direction = (self.direction + 1) % 4
-            self.changingDirection = True
+            #self.direction = (self.direction + 1) % 4
+            #self.changingDirection = True
 
 
 
