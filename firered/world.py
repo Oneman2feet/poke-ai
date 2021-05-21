@@ -19,6 +19,9 @@ directions = [
 # do nothing
 empty = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
+# A button
+aButton = [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
+
 # ASCII tiles for map
 unknown = '/'
 start = 'X'
@@ -42,6 +45,7 @@ class World:
         
     def reset(self):
         self.changingDirection = False
+        self.shouldInteract = False
         self.origin = [1, 1]
         self.map = [[unknown, unknown, unknown], [unknown, start, unknown], [unknown, unknown, unknown]]
         self.frontier = [ (1, 0), (0, 1) ]
@@ -112,6 +116,9 @@ class World:
             return None
 
     def action(self):
+        # press A if we just hit something
+        if (self.shouldInteract):
+            return aButton
         # choose where to go based on the map
         while (self.goal==None or (self.playerRow==self.goal[0] and self.playerCol==self.goal[1])):
             # check for traps
@@ -231,7 +238,9 @@ class World:
         self.prevY = self.y
         self.x = x
         self.y = y
-        if (self.changingDirection):
+        if (self.shouldInteract):
+            self.shouldInteract = False
+        elif (self.changingDirection):
             self.changingDirection = False        
         elif (self.x==expectedX and self.y==expectedY):
             #print("prev xy: %d, %d" % (self.prevX, self.prevY))
@@ -253,5 +262,7 @@ class World:
                 self.map[mapRow][mapCol] = wall
             # remove this from the frontier
             self.removeFrontier(pRow, pCol)
+            # flag to interact with this next time step
+            self.shouldInteract = True
 
 
