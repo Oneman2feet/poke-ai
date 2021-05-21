@@ -19,16 +19,18 @@ class World:
         self.prevX = x
         self.prevY = y
         self.direction = direction
+        self.changingDirection = False
         # char in map entry keeps track of type of square
         # '?' is an unknown square, 'P' is the player's current position, 'W' is a warp 
         # 'B' is a 'block' - impassible square, "D" means sign or sprite (opens dialogue box when clicked)
         # 'S' is a 'safe' square - player can move on it freely
         self.map = [["?","?","?"],["?","P","?"],["?","?","?"]]
-        self.playerX = 1
-        self.playerY = 1
+        self.playerRow = 1
+        self.playerCol = 1
 
-    def printMap(self): 
-        for row in self.map: 
+    def printMap(self):
+        #rotated = list(zip(*self.map[::-1]))
+        for row in self.map: #reversed(rotated): 
             print("\n", end =" "),
             for entry in row: 
                 print(entry, end = " "),
@@ -37,31 +39,67 @@ class World:
     def action(self):
         return directions[self.direction]
 
+    # convert direction to row,col deltas
     def directionDelta(self, direction):
         if (self.direction==0):
-            return (1, 0)
-        elif (self.direction==1):
-            return (0, -1)
-        elif (self.direction==2):
-            return (-1, 0)
-        else:
             return (0, 1)
+        elif (self.direction==1):
+            return (1, 0)
+        elif (self.direction==2):
+            return (0, -1)
+        else:
+            return (-1, 0)
+    
+    def addFrontier(self, direction):
+        if (self.direction==0 and self.playerCol==len(self.map[0])-1):
+            # add element at end of each row
+            for row in self.map:
+                row.append('?')
+            # player position does not change
+        elif (self.direction==1 and self.playerRow==len(self.map)-1):
+            # add new row at end
+            self.map.append(['?']*len(self.map[0]))
+            # player position does not change
+        elif (self.direction==2 and self.playerCol==0):
+            # add element at start of each row
+            for row in self.map:
+                row.insert(0, '?')
+            # shift player col by one
+            self.playerCol += 1
+        elif (self.playerRow==0):
+            # add new row at beginning
+            self.map.insert(0, ['?']*len(self.map[0]))
+            # shift player row by one
+            self.playerRow += 1
+            
 
     def update(self, x, y):
-        deltaX, deltaY = self.directionDelta(self.direction)
-        expectedX, expectedY = self.x + deltaX, self.y + deltaY
-        posX, posY = self.playerX + deltaX, self.playerY + deltaY
+        deltaRow, deltaCol = self.directionDelta(self.direction)
+        expectedX, expectedY = self.x + deltaCol, self.y - deltaRow # convert between x,y and row,col
+        pRow, pCol = self.playerRow + deltaRow, self.playerCol + deltaCol
         self.prevX = self.x
         self.prevY = self.y
         self.x = x
         self.y = y
-        if (self.x==expectedX and self.y==expectedY):
+        if (self.changingDirection):
+            self.changingDirection = False        
+        elif (self.x==expectedX and self.y==expectedY):
+            #print("prev xy: %d, %d" % (self.prevX, self.prevY))
+            #print("delt xy: %d, %d" % (deltaCol, -deltaRow))
+            #print("curr xy: %d, %d" % (self.x, self.y))
             print("moved as expected")
-            self.map[self.playerX][self.playerY] = 'S'
-            self.map[posX][posY] = 'P'
-            # add a row/column based on movement
+            self.map[self.playerRow][self.playerCol] = 'S'
+            self.map[pRow][pCol] = 'P'
+            self.playerRow = pRow
+            self.playerCol = pCol
+            self.addFrontier(self.direction) # add a row/column based on movement
         else:
             print("hit something")
+            # there is a wall where you wanted to go
+            self.map[pRow][pCol] = 'B'
+            # pick a new direction
+            self.direction = (self.direction + 1) % 4
+            self.changingDirection = True
 
 
 
