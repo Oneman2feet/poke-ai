@@ -100,6 +100,11 @@ while True:
     world.update(x, y)
     world.printMap()
     
+    while (dialog(ob)):
+        world.flagInteraction()
+        env.step(aButton)
+        ob, rew, done, info = increment()
+    
     # detect traps
     '''
     if (allblack(ob)):
@@ -115,6 +120,7 @@ while True:
         env.step(aButton)
         increment()
     '''
+
 
 
 
