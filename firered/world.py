@@ -265,4 +265,3 @@ class World:
             # flag to interact with this next time step
             self.shouldInteract = True
 
-
