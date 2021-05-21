@@ -16,11 +16,16 @@ directions = [
     [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]  # move up
 ]
 
+# ASCII tiles for map
 unknown = '/'
 start = 'X'
 player = '*'
 wall = '#'
 ground = '.'
+interactable = '@'
+goal = 'G'
+impossible = '?'
+frontier = 'F'
 
 class World:     
 
@@ -60,16 +65,16 @@ class World:
     def printMatrix(self, matrix):
         for row in matrix:
             print("\n", end =" "),
-            for entry in row: 
+            for entry in row:
                 print(entry, end = " "),
         print("\n")
 
     def cost(self, item):
-        if (item==unknown):
+        if (item==unknown or item==goal or item==frontier):
             return 1
         elif (item==ground or item==player):
             return 1
-        elif (item==wall or item==start):
+        elif (item==wall or item==interactable or item==start):
             return 0
         else:
             return -1
@@ -111,10 +116,16 @@ class World:
             self.goal = self.frontier.pop()
         # pathfind to goal
         path = self.pathfind()
-        while (len(path)==0):
+        while (len(path)<2):
+            # mark impossible goal on map
+            goalRow, goalCol = self.toMap(self.goal)
+            self.map[goalRow][goalCol] = impossible
             # grab from the frontier
             self.goal = self.frontier.pop()
             path = self.pathfind()
+        # show goal on map
+        goalRow, goalCol = self.toMap(self.goal)
+        self.map[goalRow][goalCol] = goal
         # get next step
         (c,r) = path.pop(1)
         # determine direction to next step
@@ -141,11 +152,12 @@ class World:
         tile = self.map[mapRow][mapCol]
         if (tile==unknown):
             self.frontier.add((row, col))
+            self.map[mapRow][mapCol] = frontier
         
     def removeFrontier(self, row, col):
         self.frontier.discard((row, col))
         # remove goal if it is impossible
-        if (self.goal[0]==row and self.goal[1]==col):
+        if (self.goal!=None and self.goal[0]==row and self.goal[1]==col):
             self.goal = None
     
     def expandMap(self, direction):
@@ -191,6 +203,14 @@ class World:
             self.addFrontier(self.playerRow, self.playerCol-1)
             self.addFrontier(self.playerRow-1, self.playerCol)
             self.addFrontier(self.playerRow, self.playerCol+1)
+
+    def flagInteraction(self):
+        deltaRow, deltaCol = self.directionDelta(self.direction)
+        pRow, pCol = self.playerRow + deltaRow, self.playerCol + deltaCol
+        mapRow, mapCol = self.toMap((pRow, pCol))
+        if (self.map[mapRow][mapCol]!=start):
+            self.map[mapRow][mapCol] = interactable
+        self.removeFrontier(pRow, pCol)
 
     def update(self, x, y):
         deltaRow, deltaCol = self.directionDelta(self.direction)
