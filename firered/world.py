@@ -16,6 +16,9 @@ directions = [
     [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]  # move up
 ]
 
+# do nothing
+empty = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
 # ASCII tiles for map
 unknown = '/'
 start = 'X'
@@ -35,14 +38,13 @@ class World:
         self.prevX = x
         self.prevY = y
         self.direction = direction
+        self.reset()
+        
+    def reset(self):
         self.changingDirection = False
-        # char in map entry keeps track of type of square
-        # '?' is an unknown square, 'P' is the player's current position, 'W' is a warp 
-        # 'B' is a 'block' - impassible square, "D" means sign or sprite (opens dialogue box when clicked)
-        # 'S' is a 'safe' square - player can move on it freely
         self.origin = [1, 1]
         self.map = [[unknown, unknown, unknown], [unknown, start, unknown], [unknown, unknown, unknown]]
-        self.frontier = { (0, 1) }
+        self.frontier = [ (1, 0), (0, 1) ]
         self.goal = None
         self.playerRow = 0
         self.playerCol = 0
@@ -112,6 +114,9 @@ class World:
     def action(self):
         # choose where to go based on the map
         while (self.goal==None or (self.playerRow==self.goal[0] and self.playerCol==self.goal[1])):
+            # check for traps
+            if (len(self.frontier)==0):
+                return empty
             # grab from the frontier
             self.goal = self.frontier.pop()
         # pathfind to goal
@@ -120,6 +125,9 @@ class World:
             # mark impossible goal on map
             goalRow, goalCol = self.toMap(self.goal)
             self.map[goalRow][goalCol] = impossible
+            # check for traps
+            if (len(self.frontier)==0):
+                return empty
             # grab from the frontier
             self.goal = self.frontier.pop()
             path = self.pathfind()
@@ -150,12 +158,13 @@ class World:
     def addFrontier(self, row, col):
         mapRow, mapCol = self.toMap((row, col))
         tile = self.map[mapRow][mapCol]
-        if (tile==unknown):
-            self.frontier.add((row, col))
+        if (tile==unknown and not (row, col) in self.frontier):
+            self.frontier.append((row, col))
             self.map[mapRow][mapCol] = frontier
         
     def removeFrontier(self, row, col):
-        self.frontier.discard((row, col))
+        if ((row, col) in self.frontier):
+            self.frontier.remove((row, col))
         # remove goal if it is impossible
         if (self.goal!=None and self.goal[0]==row and self.goal[1]==col):
             self.goal = None
@@ -171,8 +180,8 @@ class World:
                 # player position does not change
             # add up, right, down to frontier if not already visited
             self.addFrontier(self.playerRow-1, self.playerCol)
-            self.addFrontier(self.playerRow, self.playerCol+1)
             self.addFrontier(self.playerRow+1, self.playerCol)
+            self.addFrontier(self.playerRow, self.playerCol+1) # current direction added last
         elif (self.direction==1):
             if (mapPlayerRow==len(self.map)-1):
                 # add new row at end
@@ -180,8 +189,8 @@ class World:
                 # player position does not change
             # add left, down, right to frontier if not already visited
             self.addFrontier(self.playerRow, self.playerCol-1)
-            self.addFrontier(self.playerRow+1, self.playerCol)
             self.addFrontier(self.playerRow, self.playerCol+1)
+            self.addFrontier(self.playerRow+1, self.playerCol) # current direction added last
         elif (self.direction==2):
             if (mapPlayerCol==0):
                 # add element at start of each row
@@ -191,8 +200,8 @@ class World:
                 self.origin[1] += 1
             # add up, left, down to frontier if not already visited
             self.addFrontier(self.playerRow-1, self.playerCol)
-            self.addFrontier(self.playerRow, self.playerCol-1)
             self.addFrontier(self.playerRow+1, self.playerCol)
+            self.addFrontier(self.playerRow, self.playerCol-1) # current direction added last
         elif (self.direction==3):
             if (mapPlayerRow==0):
                 # add new row at beginning
@@ -201,8 +210,8 @@ class World:
                 self.origin[0] += 1
             # add left, up, right to frontier if not already visited
             self.addFrontier(self.playerRow, self.playerCol-1)
-            self.addFrontier(self.playerRow-1, self.playerCol)
             self.addFrontier(self.playerRow, self.playerCol+1)
+            self.addFrontier(self.playerRow-1, self.playerCol) # current direction added last
 
     def flagInteraction(self):
         deltaRow, deltaCol = self.directionDelta(self.direction)
@@ -229,6 +238,8 @@ class World:
             #print("delt xy: %d, %d" % (deltaCol, -deltaRow))
             #print("curr xy: %d, %d" % (self.x, self.y))
             #print("moved as expected")
+            # remove from frontier
+            self.removeFrontier(pRow, pCol)
             if (self.map[mapPlayerRow][mapPlayerCol]!=start):
                 self.map[mapPlayerRow][mapPlayerCol] = ground
             if (self.map[mapRow][mapCol]!=start):
