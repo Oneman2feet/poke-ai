@@ -5,6 +5,7 @@ import time
 import random
 import sys
 import world
+import vision
     
 # initialize game
 env = retro.make('PokemonFireRedVersion-GbAdvance', 'Level1')
@@ -42,29 +43,9 @@ def increment():
     return ob, rew, done, info
         
 def waitForAnimation():
-    for x in range(500):
+    for x in range(2000):
         env.step(empty)
         env.render()
-        
-def allblack(ob):
-    for i in range(160):
-        for j in range(240):
-            for k in range(3):
-                if (ob[i][j][k]!=0):
-                    return False
-    return True
-
-def inside(ob):
-    for i in range(20, 218):
-        if (ob[152][i][0]!=0 or ob[152][i][1]!=0 or ob[152][i][2]!=0):
-            return False
-    return True
-
-def dialog(ob):
-    for i in range(20, 218):
-        if (ob[152][i][0]!=248 or ob[152][i][1]!=248 or ob[152][i][2]!=248):
-            return False
-    return True
 
 def xy(info):
     return ((int)(info['x']/tile), (int)(info['y']/tile))
@@ -105,20 +86,32 @@ while True:
     world.update(x, y)
     world.printMap()
     
-    while (dialog(ob)):
+    while (vision.dialog(ob)):
         world.flagInteraction()
         env.step(aButton)
         ob, rew, done, info = increment()
     
+    while (vision.battle(ob) or vision.attack(ob)):
+        if (vision.battledialog(ob)):
+            env.step(aButton)
+            ob, rew, done, info = increment()
+        else:
+            env.step(aButton)
+            waitForAnimation()
+            ob, rew, done, info = increment()
+    
     # detect traps
-    if (allblack(ob)):
+    if (vision.allblack(ob)):
         print("black screen")
-    elif (inside(ob)):
+    elif (vision.inside(ob)):
         print("leaving room")
-        world.reset()
-        waitForAnimation()
-        env.step(directions[1])
-        increment()
+        #world.reset()
+        #waitForAnimation()
+        #env.step(directions[1])
+        #increment()
+
+
+
 
 
 
