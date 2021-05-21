@@ -42,7 +42,7 @@ def increment():
     return ob, rew, done, info
         
 def waitForAnimation():
-    for x in range(50):
+    for x in range(500):
         env.step(empty)
         env.render()
         
