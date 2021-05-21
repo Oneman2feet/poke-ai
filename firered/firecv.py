@@ -36,7 +36,7 @@ tile = 16 # sixteen pixels in a square
 
 
 def increment():
-    for x in range(20):
+    for x in range(50):
         ob, rew, done, info = env.step(empty)
         env.render()
     return ob, rew, done, info
@@ -115,6 +115,9 @@ while True:
         env.step(aButton)
         increment()
     '''
+
+
+
 
 
 
