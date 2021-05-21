@@ -1,7 +1,11 @@
 #!/usr/bin/python
 
 import time
-import random 
+import random
+
+from pathfinding.core.diagonal_movement import DiagonalMovement
+from pathfinding.core.grid import Grid
+from pathfinding.finder.a_star import AStarFinder
 
 # proceeds clockwise
 directions = [
@@ -24,19 +28,74 @@ class World:
         # '?' is an unknown square, 'P' is the player's current position, 'W' is a warp 
         # 'B' is a 'block' - impassible square, "D" means sign or sprite (opens dialogue box when clicked)
         # 'S' is a 'safe' square - player can move on it freely
+        self.origin = [0, 0]
         self.map = [["?","?","?"],["?","P","?"],["?","?","?"]]
+        self.frontier = [(0, 1), (1, 0), (1, 2), (2, 1)]
+        self.goal = [1, 2]
+        self.path = None
         self.playerRow = 1
         self.playerCol = 1
 
     def printMap(self):
-        #rotated = list(zip(*self.map[::-1]))
-        for row in self.map: #reversed(rotated): 
+        for row in self.map:
             print("\n", end =" "),
             for entry in row: 
                 print(entry, end = " "),
         print("\n")
 
+    def cost(self, item):
+        if (item=='?'):
+            return 2
+        elif (item=='S' or item=='P'):
+            return 1
+        elif (item=='B'):
+            return 0
+        else:
+            return -1
+        
+    # return array of directions needed to move to the goal
+    def pathfind(self):
+        # convert map to cost matrix
+        matrix = [ [ self.cost(item) for item in row ] for row in self.map ]
+        # input to pathfinding algorithm
+        grid = Grid(matrix=matrix)
+        # determine start and end
+        start = grid.node(self.playerRow+self.origin[0], self.playerCol+self.origin[1])
+        end = grid.node(self.goal[0]+self.origin[0], self.goal[1]+self.origin[1])
+        finder = AStarFinder(diagonal_movement=DiagonalMovement.never)
+        path, runs = finder.find_path(start, end, grid)
+        return path
+
+    def directionTo(self, position):
+        rowDiff = position[0] - (self.playerRow + self.origin[0])
+        colDiff = position[1] - (self.playerCol + self.origin[1])
+        if (rowDiff==0 and colDiff==1):
+            return 0
+        elif (rowDiff==1 and colDiff==0):
+            return 1
+        elif (rowDiff==0 and colDiff==-1):
+            return 2
+        elif (rowDiff==-1 and colDiff==0):
+            return 3
+        else:
+            return None
+
     def action(self):
+        # choose where to go based on the map
+        while (self.goal==None or (self.playerRow==self.goal[0] and self.playerCol==self.goal[1])):
+            # grab from the frontier
+            print("new goal")
+            self.goal = self.frontier.pop()
+        # pathfind to goal
+        self.path = self.pathfind()
+        # get next step
+        newPosition = self.path.pop(1)
+        # determine direction to next step
+        newDirection = self.directionTo(newPosition)
+        # flag changingDirection if so
+        if (newDirection!=self.direction):
+            self.changingDirection = True
+            self.direction = newDirection
         return directions[self.direction]
 
     # convert direction to row,col deltas
@@ -50,27 +109,27 @@ class World:
         else:
             return (-1, 0)
     
-    def addFrontier(self, direction):
-        if (self.direction==0 and self.playerCol==len(self.map[0])-1):
+    def expandMap(self, direction):
+        if (self.direction==0 and self.playerCol==len(self.map[0])-1-self.origin[1]):
             # add element at end of each row
             for row in self.map:
                 row.append('?')
             # player position does not change
-        elif (self.direction==1 and self.playerRow==len(self.map)-1):
+        elif (self.direction==1 and self.playerRow==len(self.map)-1-self.origin[0]):
             # add new row at end
             self.map.append(['?']*len(self.map[0]))
             # player position does not change
-        elif (self.direction==2 and self.playerCol==0):
+        elif (self.direction==2 and self.playerCol==self.origin[1]):
             # add element at start of each row
             for row in self.map:
                 row.insert(0, '?')
-            # shift player col by one
-            self.playerCol += 1
-        elif (self.playerRow==0):
+            # shift map origin column by one
+            self.origin[1] += 1
+        elif (self.playerRow==self.origin[0]):
             # add new row at beginning
             self.map.insert(0, ['?']*len(self.map[0]))
-            # shift player row by one
-            self.playerRow += 1
+            # shift map origin row by one
+            self.origin[0] += 1
             
 
     def update(self, x, y):
@@ -87,120 +146,19 @@ class World:
             #print("prev xy: %d, %d" % (self.prevX, self.prevY))
             #print("delt xy: %d, %d" % (deltaCol, -deltaRow))
             #print("curr xy: %d, %d" % (self.x, self.y))
-            print("moved as expected")
-            self.map[self.playerRow][self.playerCol] = 'S'
-            self.map[pRow][pCol] = 'P'
+            #print("moved as expected")
+            self.map[self.playerRow+self.origin[0]][self.playerCol+self.origin[1]] = 'S'
+            self.map[pRow+self.origin[0]][pCol+self.origin[1]] = 'P'
             self.playerRow = pRow
             self.playerCol = pCol
-            self.addFrontier(self.direction) # add a row/column based on movement
+            self.expandMap(self.direction) # add a row/column based on movement
         else:
-            print("hit something")
+            #print("hit something")
             # there is a wall where you wanted to go
-            self.map[pRow][pCol] = 'B'
+            self.map[pRow+self.origin[0]][pCol+self.origin[1]] = 'B'
             # pick a new direction
             self.direction = (self.direction + 1) % 4
             self.changingDirection = True
-
-
-
-    def updateMap(self): 
-        print("Updating Map - direction is " + str(self.direction) + "\n")
-        #if a warp occurred, both X and Y will change. Check for this
-        if((self.xPos == self.prevX or self.yPos == self.prevY) and (abs(self.xPos - self.prevX) <= 2 or abs(self.xPos - self.prevX) > 250) and abs(self.yPos - self.prevY) <= 2 or abs(self.yPos - self.prevY) > 250): 
-            if(self.direction == "LEFT"):
-                #print("Direction is left \n")
-                #print("Current xPos = " + str(self.xPos) + ", previous xPos = " + str(self.prevX))
-                if (self.xPos != self.prevX) :
-                    self.currentMap[self.playerY][self.playerX] = "S"
-                    self.playerX = self.playerX - 1
-                    self.currentMap[self.playerY][self.playerX] = "P"
-                    if(self.playerX == 0):
-                        self.playerX = 1
-                        for row in self.currentMap: 
-                            row.insert(0, "?")
-                    print("Player moved left")
-                else: 
-                    self.currentMap[self.playerY][self.playerX - 1] = "B"
-                    print("Player encountered an obstacle while moving left")
-                    self.pathStack.append("CHECK")
-            elif(self.direction == "UP"):
-                print("Direction is up \n")
-                print("Current yPos = " + str(self.yPos) + ", previous yPos = " + str(self.prevY))
-                if (self.yPos != self.prevY):
-                    self.currentMap[self.playerY][self.playerX] = "S"
-                    self.playerY = self.playerY - 1
-                    self.currentMap[self.playerY][self.playerX] = "P"
-                    if(self.playerY == 0):
-                        self.playerY = 1
-                        self.currentMap.insert(0, ["?"] * len(self.currentMap[0]))
-                    print("Player moved up")                
-                else: 
-                    self.currentMap[self.playerY - 1][self.playerX] = "B"
-                    print("Player encountered an obstacle while moving up")
-                    self.pathStack.append("CHECK")
-            elif(self.direction == "RIGHT"):
-                print("Direction is right \n")
-                print("Current xPos = " + str(self.xPos) + ", previous xPos = " + str(self.prevX))
-                if (self.xPos != self.prevX) :
-                    self.currentMap[self.playerY][self.playerX] = "S"
-                    self.playerX = self.playerX + 1
-                    self.currentMap[self.playerY][self.playerX] = "P"
-                    if(self.playerX == len(self.currentMap[0]) - 1):
-                        for row in self.currentMap: 
-                            row.append("?")
-                    print("Player moved right")
-                else: 
-                    self.currentMap[self.playerY][self.playerX + 1] = "B"
-                    print("Player encountered an obstacle while moving right")
-                    self.pathStack.append("CHECK")
-            elif(self.direction == "DOWN"):
-                print("Direction is down \n")
-                print("Current yPos = " + str(self.yPos) + ", previous yPos = " + str(self.prevY))
-                if (self.yPos != self.prevY) :
-                    self.currentMap[self.playerY][self.playerX] = "S"
-                    self.playerY = self.playerY + 1
-                    self.currentMap[self.playerY][self.playerX] = "P"
-                    if(self.playerY == len(self.currentMap) - 1):
-                        self.currentMap.append(["?"] * len(self.currentMap[0]))
-                    print("Player moved down")
-                else: 
-                    self.currentMap[self.playerY + 1][self.playerX] = "B"
-                    print("Player encountered an obstacle while moving down")
-                    self.pathStack.append("CHECK")
-        else: 
-            #Warp must have occurred!
-            #Step 1. Mark warp on current map + print new map
-            print("Player walked through a warp!")
-            self.pathStack.append("CHECK")
-            if(self.direction == "LEFT"): 
-                self.currentMap[self.playerY][self.playerX - 1] = "W"
-            elif(self.direction == "UP"): 
-                self.currentMap[self.playerY - 1][self.playerX] = "W"
-            elif(self.direction == "RIGHT"): 
-                self.currentMap[self.playerY][self.playerX + 1] = "W"
-            elif(self.direction == "DOWN"): 
-                self.currentMap[self.playerY + 1][self.playerX] = "W"
-            self.printMap()
-            #Step 2. create new blank map, add it to mapList and assign it as current map
-            newMap = [["?","?","?"],["?","P", "?"],["?","?","?"]]
-            self.prevX = 0
-            self.prevY = 0
-            self.xPos = 0
-            self.yPos = 0
-            self.playerX = 1 
-            self.playerY = 1
-            self.mapList.append(newMap)
-            self.currentMap = newMap
-        print("Player Coordinates: Player X = " + str(self.playerX) + ", Player Y = " + str(self.playerY))            
-            
-                
-                
-                 
-                   
-        
-
-
-
 
 
 
