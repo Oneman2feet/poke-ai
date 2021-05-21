@@ -94,6 +94,11 @@ while True:
     
     # walk around world
     action = world.action()
+    if (action==empty):
+        world.reset()
+        action = world.action()
+    
+    # SLAM
     env.step(action)
     ob, rew, done, info = increment()
     x,y = xy(info)
@@ -106,20 +111,14 @@ while True:
         ob, rew, done, info = increment()
     
     # detect traps
-    '''
     if (allblack(ob)):
         print("black screen")
     elif (inside(ob)):
         print("leaving room")
+        world.reset()
         waitForAnimation()
         env.step(directions[1])
         increment()
-    elif (dialog(ob)):
-        print("talking to someone")
-        waitForAnimation()
-        env.step(aButton)
-        increment()
-    '''
 
 
 
