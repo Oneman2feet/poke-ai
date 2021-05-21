@@ -3,13 +3,12 @@
 import retro
 import time
 import random
-import sys 
-
+import sys
+import world
+    
+# initialize game
 env = retro.make('PokemonFireRedVersion-GbAdvance', 'Level1')
 env.reset()
-env.render()
-    
-empty = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] # empty action
 
 # proceeds clockwise
 directions = [
@@ -31,12 +30,16 @@ actions = [
 aButton = [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
 bButton = [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0]
 
+empty = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] # empty action
+
 tile = 16 # sixteen pixels in a square
 
+
 def increment():
-    for x in range(10):
-        env.step(empty)
+    for x in range(20):
+        ob, rew, done, info = env.step(empty)
         env.render()
+    return ob, rew, done, info
         
 def waitForAnimation():
     for x in range(50):
@@ -63,8 +66,18 @@ def dialog(ob):
             return False
     return True
 
+def xy(info):
+    return ((int)(info['x']/tile), (int)(info['y']/tile))
+
+# getting started
+ob, rew, done, info = increment()
+x,y = xy(info)
+world = world.World(x, y, 1)
+world.printMap()
+
 while True:
     # 5% chance that you press A, 10% chance B, 85% chance arrows
+    '''
     buttonChoice = random.random()
     action = None
     if (buttonChoice < 0.05):
@@ -77,8 +90,18 @@ while True:
     # take the action
     ob, rew, done, info = env.step(action)
     increment()
+    '''
+    
+    # walk around world
+    action = world.action()
+    env.step(action)
+    ob, rew, done, info = increment()
+    x,y = xy(info)
+    world.update(x, y)
+    world.printMap()
     
     # detect traps
+    '''
     if (allblack(ob)):
         print("black screen")
     elif (inside(ob)):
@@ -91,4 +114,25 @@ while True:
         waitForAnimation()
         env.step(aButton)
         increment()
-        
+    '''
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
