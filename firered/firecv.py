@@ -11,25 +11,8 @@ import vision
 env = retro.make('PokemonFireRedVersion-GbAdvance', 'Level1')
 env.reset()
 
-# proceeds clockwise
-directions = [
-    [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0], # move right
-    [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0], # move down
-    [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0], # move left
-    [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]  # move up
-]
-
-actions = [
-    [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0], # move right
-    [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0], # move down
-    [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0], # move left
-    [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0], # move up
-    [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0], # press A
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0]  # press B
-]
-
 aButton = [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
-bButton = [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0]
+bButton = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
 empty = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] # empty action
 
@@ -57,22 +40,6 @@ world = world.World(x, y, 1)
 world.printMap()
 
 while True:
-    # 5% chance that you press A, 10% chance B, 85% chance arrows
-    '''
-    buttonChoice = random.random()
-    action = None
-    if (buttonChoice < 0.05):
-        action = aButton
-    elif (buttonChoice < 0.15):
-        action = bButton
-    else:
-        action = random.choice(directions)
-    
-    # take the action
-    ob, rew, done, info = env.step(action)
-    increment()
-    '''
-    
     # walk around world
     action = world.action()
     if (action==empty):
@@ -88,7 +55,10 @@ while True:
     
     while (vision.dialog(ob)):
         world.flagInteraction()
-        env.step(aButton)
+        if (vision.pc(ob)):
+            env.step(bButton)
+        else:
+            env.step(aButton)
         ob, rew, done, info = increment()
     
     while (vision.battle(ob) or vision.attack(ob)):
@@ -97,36 +67,16 @@ while True:
             ob, rew, done, info = increment()
         else:
             env.step(aButton)
-            waitForAnimation()
+            #waitForAnimation()
             ob, rew, done, info = increment()
     
     # detect traps
-    if (vision.allblack(ob)):
+    while (vision.allblack(ob)):
         print("black screen")
-    elif (vision.inside(ob)):
+        ob, rew, done, info = increment()
+    if (vision.inside(ob)):
         print("leaving room")
         #world.reset()
         #waitForAnimation()
         #env.step(directions[1])
         #increment()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
