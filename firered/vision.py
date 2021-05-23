@@ -48,6 +48,8 @@ def attack(ob):
             return False
     return True
 
-
-
-        
+def pc(ob):
+    for i in range(15, 109):
+        if (not sameColor(ob[4][i], grey)):
+            return False
+    return True
