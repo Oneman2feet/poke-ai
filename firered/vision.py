@@ -53,3 +53,4 @@ def pc(ob):
         if (not sameColor(ob[4][i], grey)):
             return False
     return True
+
