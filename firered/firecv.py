@@ -20,7 +20,7 @@ tile = 16 # sixteen pixels in a square
 
 
 def increment():
-    for x in range(50):
+    for x in range(20):
         ob, rew, done, info = env.step(empty)
         env.render()
     return ob, rew, done, info
@@ -73,7 +73,13 @@ while True:
     # detect traps
     while (vision.allblack(ob)):
         print("black screen")
+        x = info['x']
+        y = info['y']
+        print((x, y))
         ob, rew, done, info = increment()
+        print((info['x'], info['y']))
+        if (info['x']!=x or info['y']!=y):
+            world.reset() # warped
     if (vision.inside(ob)):
         print("leaving room")
         #world.reset()
