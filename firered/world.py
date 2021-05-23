@@ -258,6 +258,10 @@ class World:
             self.playerCol = pCol
             self.expandMap(self.direction) # add a row/column based on movement
         else:
+            print("expected:")
+            print((expectedX, expectedY))
+            print("actual:")
+            print((self.x,self.y))
             # there is a wall where you wanted to go
             if (self.map[mapRow][mapCol]!=start):
                 self.map[mapRow][mapCol] = wall
