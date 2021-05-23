@@ -118,6 +118,7 @@ class World:
     def action(self):
         # press A if we just hit something
         if (self.shouldInteract):
+            print("interact with tile")
             return aButton
         # choose where to go based on the map
         while (self.goal==None or (self.playerRow==self.goal[0] and self.playerCol==self.goal[1])):
@@ -264,4 +265,3 @@ class World:
             self.removeFrontier(pRow, pCol)
             # flag to interact with this next time step
             self.shouldInteract = True
-
