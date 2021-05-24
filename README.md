@@ -8,5 +8,5 @@ a bot to play pokemon so you don't have to
 
 ## Integrating Roms
 
-- Download [Integration UI](https://github.com/openai/retro/releases/tag/f347d7e) app - place excutable in gym retro PATH
+- Download [Integration UI](https://github.com/openai/retro/releases/tag/f347d7e) app - place excutable in retro PATH (`[...]\Python37\Lib\site-packages\retro`)
 - Pokemon Roms (can find online)
