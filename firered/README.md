@@ -1,3 +1,9 @@
+# Prerequisites
+
+- `pip install pathfinding`
+
+# Set up ROM
+
 1. in integration ui app, click game > integrate and choose rom and keep default name
 2. If you don't already have a state file, start the game and go to game > save state at the point where you want it to start
 3. copy the `GameName` folder from contrib to stable `<PythonPath>\Python37\site-packages\retro\data`
