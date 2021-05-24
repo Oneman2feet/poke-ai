@@ -8,7 +8,7 @@ import world
 import vision
     
 # initialize game
-env = retro.make('PokemonFireRedVersion-GbAdvance', 'Level1')
+env = retro.make('PokemonFireRedVersion-GbAdvance', 'start')
 env.reset()
 
 aButton = [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
