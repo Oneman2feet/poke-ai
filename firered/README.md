@@ -11,3 +11,8 @@
 5. copy paste the scenario, data, and state files to the `GameName` directory
 6. in the python script, change the game name to match
 7. run the python script!
+
+# Record and playback
+
+1. install [ffmpeg](https://github.com/BtbN/FFmpeg-Builds/releases) and put in PATH
+2. `python -m retro.scripts.playback_movie <bk2file>` to render video

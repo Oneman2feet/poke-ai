@@ -8,7 +8,7 @@ import world
 import vision
     
 # initialize game
-env = retro.make('PokemonFireRedVersion-GbAdvance', 'start')
+env = retro.make(game='PokemonFireRedVersion-GbAdvance', state='start', record='.')
 env.reset()
 
 directions = [
