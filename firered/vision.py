@@ -6,6 +6,7 @@ black = [0, 0, 0]
 white = [248, 248, 248]
 blue = [40, 80, 104]
 grey = [112, 104, 128]
+red = [232, 0, 0]
 
 def sameColor(a, b):
     return a[0]==b[0] and a[1]==b[1] and a[2]==b[2]
@@ -54,3 +55,8 @@ def pc(ob):
             return False
     return True
 
+def nopp(ob):
+    for i in range(127, 132):
+        if (not sameColor(ob[i][168], red)):
+            return False
+    return True

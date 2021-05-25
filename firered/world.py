@@ -46,6 +46,7 @@ class World:
     def reset(self):
         self.changingDirection = False
         self.shouldInteract = False
+        self.justBattled = False
         self.origin = [1, 1]
         self.map = [[unknown, unknown, unknown], [unknown, start, unknown], [unknown, unknown, unknown]]
         self.frontier = [ (1, 0), (0, 1) ]
@@ -154,7 +155,9 @@ class World:
 
     # convert direction to row,col deltas
     def directionDelta(self, direction):
-        if (self.direction==0):
+        if (self.direction==-1):
+            return (0, 0)
+        elif (self.direction==0):
             return (0, 1)
         elif (self.direction==1):
             return (1, 0)
@@ -229,6 +232,16 @@ class World:
             self.map[mapRow][mapCol] = interactable
         self.removeFrontier(pRow, pCol)
 
+    def flagBattle(self):
+        # confirm to the world walker that it's okay he didn't move
+        self.justBattled = True
+        # retroactively mark the tile in front as unknown
+        deltaRow, deltaCol = self.directionDelta(self.direction)
+        pRow, pCol = self.playerRow + deltaRow, self.playerCol + deltaCol
+        mapRow, mapCol = self.toMap((pRow, pCol))
+        if (self.map[mapRow][mapCol]!=start):
+            self.map[mapRow][mapCol] = unknown
+
     def update(self, x, y):
         deltaRow, deltaCol = self.directionDelta(self.direction)
         expectedX, expectedY = self.x + deltaCol, self.y - deltaRow # convert between x,y and row,col
@@ -242,7 +255,9 @@ class World:
         if (self.shouldInteract):
             self.shouldInteract = False
         elif (self.changingDirection):
-            self.changingDirection = False        
+            self.changingDirection = False
+        elif (self.justBattled):
+            self.justBattled = False        
         elif (self.x==expectedX and self.y==expectedY):
             #print("prev xy: %d, %d" % (self.prevX, self.prevY))
             #print("delt xy: %d, %d" % (deltaCol, -deltaRow))
@@ -257,11 +272,8 @@ class World:
             self.playerRow = pRow
             self.playerCol = pCol
             self.expandMap(self.direction) # add a row/column based on movement
-        else:
-            print("expected:")
-            print((expectedX, expectedY))
-            print("actual:")
-            print((self.x,self.y))
+        elif (self.x==self.prevX and self.y==self.prevY):
+            print("ran into obstacle!")
             # there is a wall where you wanted to go
             if (self.map[mapRow][mapCol]!=start):
                 self.map[mapRow][mapCol] = wall
@@ -269,3 +281,11 @@ class World:
             self.removeFrontier(pRow, pCol)
             # flag to interact with this next time step
             self.shouldInteract = True
+        else:
+            print("moved more than expected!")
+            print("before:")
+            print((self.prevX, self.prevY))
+            print("actual:")
+            print((self.x,self.y))
+            self.reset()
+            
