@@ -28,7 +28,7 @@ tile = 16 # sixteen pixels in a square
 
 # the game takes several frames to respond to input, making this necessary
 def increment():
-    for _ in range(10):
+    for _ in range(15): # 15 is the number of frames in a step
         ob, rew, done, info = env.step(empty)
         env.render()
     return ob, rew, done, info
@@ -93,6 +93,7 @@ while True:
         print("INTERACTING")
         world.flagInteraction()
         if (vision.pc(ob)):
+            print("EXIT PC")
             env.step(bButton)
         else:
             env.step(aButton)

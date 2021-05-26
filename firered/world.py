@@ -266,6 +266,18 @@ class World:
             self.shouldInteract = False
         elif (self.changingDirection):
             self.changingDirection = False
+            # sometimes if you time it just right
+            # you can walk in the new direction on the first press
+            if (self.x==expectedX and self.y==expectedY):
+                # remove from frontier
+                self.removeFrontier(pRow, pCol)
+                if (self.map[mapPlayerRow][mapPlayerCol]!=start):
+                    self.map[mapPlayerRow][mapPlayerCol] = ground
+                if (self.map[mapRow][mapCol]!=start):
+                    self.map[mapRow][mapCol] = player
+                self.playerRow = pRow
+                self.playerCol = pCol
+                self.expandMap(self.direction) # add a row/column based on movement
         elif (self.justBattled):
             self.justBattled = False        
         elif (self.x==expectedX and self.y==expectedY):
