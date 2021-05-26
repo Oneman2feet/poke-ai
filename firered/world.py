@@ -116,13 +116,16 @@ class World:
         else:
             return None
 
+    def isGoal(self, row, col):
+        return self.goal==None or row==self.goal[0] and col==self.goal[1]
+
     def action(self):
         # press A if we just hit something
         if (self.shouldInteract):
-            print("interact with tile")
+            #print("interact with tile")
             return aButton
         # choose where to go based on the map
-        while (self.goal==None or (self.playerRow==self.goal[0] and self.playerCol==self.goal[1])):
+        while (self.goal==None or (self.isGoal(self.playerRow, self.playerCol))):
             # check for traps
             if (len(self.frontier)==0):
                 return empty
@@ -141,6 +144,7 @@ class World:
             self.goal = self.frontier.pop()
             path = self.pathfind()
         # show goal on map
+        print(self.goal)
         goalRow, goalCol = self.toMap(self.goal)
         self.map[goalRow][goalCol] = goal
         # get next step
@@ -231,6 +235,11 @@ class World:
         if (self.map[mapRow][mapCol]!=start):
             self.map[mapRow][mapCol] = interactable
         self.removeFrontier(pRow, pCol)
+        if (self.isGoal(pRow, pCol)):
+            print("remove goal:")
+            print(self.goal)
+            self.goal = None
+        #self.shouldInteract = False
 
     def flagBattle(self):
         # confirm to the world walker that it's okay he didn't move
@@ -243,6 +252,7 @@ class World:
             self.map[mapRow][mapCol] = unknown
 
     def update(self, x, y):
+        print("update with x,y = %d,%d" % (x,y))
         deltaRow, deltaCol = self.directionDelta(self.direction)
         expectedX, expectedY = self.x + deltaCol, self.y - deltaRow # convert between x,y and row,col
         pRow, pCol = self.playerRow + deltaRow, self.playerCol + deltaCol
@@ -273,7 +283,7 @@ class World:
             self.playerCol = pCol
             self.expandMap(self.direction) # add a row/column based on movement
         elif (self.x==self.prevX and self.y==self.prevY):
-            print("ran into obstacle!")
+            #print("ran into obstacle!")
             # there is a wall where you wanted to go
             if (self.map[mapRow][mapCol]!=start):
                 self.map[mapRow][mapCol] = wall
