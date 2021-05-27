@@ -262,7 +262,16 @@ class World:
         self.prevY = self.y
         self.x = x
         self.y = y
-        if (self.shouldInteract):
+
+        # check for warp
+        if (not (self.x==expectedX and self.y==expectedY) and not (self.x==self.prevX and self.y==self.prevY)):
+            print("moved more than expected!")
+            print("before:")
+            print((self.prevX, self.prevY))
+            print("actual:")
+            print((self.x,self.y))
+            self.reset()
+        elif (self.shouldInteract):
             self.shouldInteract = False
         elif (self.changingDirection):
             self.changingDirection = False
