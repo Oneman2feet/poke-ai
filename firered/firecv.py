@@ -33,6 +33,16 @@ def increment():
         ob, rew, done, info = env.step(empty)
         env.render()
     return ob, rew, done, info
+
+def incrementWalk():
+    ob, rew, done, info = increment()
+
+    # increment until character direction is observed
+    while(s.characterDirection(ob) == -1):
+        ob, rew, done, info = env.step(empty)
+        env.render()
+
+    return ob, rew, done, info
         
 #def waitForAnimation():
 #    for _ in range(2000):
@@ -76,18 +86,18 @@ world = world.World(x, y, 3) # starting direction is UP
 world.printMap()
 justMoved = False
 
-
+# sprite detector
 s = sprite.Sprite()
-print(s.isCharacterUp(ob))
 
-exit()
 
 while True:
     # wait to increment and respond to game
     #input("Press enter for next timestep")
 
     # increment the game
-    ob, rew, done, info = increment()
+    ob, rew, done, info = incrementWalk()
+
+    print(s.characterDirection(ob))
 
     # update map from move
     if (justMoved and onTile(info)):
