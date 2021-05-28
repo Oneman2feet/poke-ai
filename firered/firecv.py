@@ -77,7 +77,7 @@ justMoved = False
 
 while True:
     # wait to increment and respond to game
-    input("Press enter for next timestep")
+    #input("Press enter for next timestep")
 
     # increment the game
     ob, rew, done, info = increment()

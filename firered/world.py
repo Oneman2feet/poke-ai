@@ -236,20 +236,21 @@ class World:
             self.map[mapRow][mapCol] = interactable
         self.removeFrontier(pRow, pCol)
         if (self.isGoal(pRow, pCol)):
-            print("remove goal:")
-            print(self.goal)
+            #print("remove goal:")
+            #print(self.goal)
             self.goal = None
         #self.shouldInteract = False
 
     def flagBattle(self):
         # confirm to the world walker that it's okay he didn't move
         self.justBattled = True
-        # retroactively mark the tile in front as unknown
-        deltaRow, deltaCol = self.directionDelta(self.direction)
-        pRow, pCol = self.playerRow + deltaRow, self.playerCol + deltaCol
-        mapRow, mapCol = self.toMap((pRow, pCol))
-        if (self.map[mapRow][mapCol]!=start):
-            self.map[mapRow][mapCol] = unknown
+        # retroactively mark any surrounding walls as unknown
+        for direction in range(4):
+            deltaRow, deltaCol = self.directionDelta(direction)
+            pRow, pCol = self.playerRow + deltaRow, self.playerCol + deltaCol
+            mapRow, mapCol = self.toMap((pRow, pCol))
+            if (self.map[mapRow][mapCol]==wall):
+                self.map[mapRow][mapCol] = unknown
 
     def update(self, x, y):
         print("update with x,y = %d,%d" % (x,y))
