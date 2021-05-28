@@ -5,6 +5,7 @@ import time
 import random
 import sys
 import world
+import sprite
 import vision
     
 # initialize game
@@ -74,6 +75,12 @@ x,y = xy(info)
 world = world.World(x, y, 3) # starting direction is UP
 world.printMap()
 justMoved = False
+
+
+s = sprite.Sprite()
+s.isCharacter(ob)
+
+exit()
 
 while True:
     # wait to increment and respond to game

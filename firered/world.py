@@ -49,7 +49,7 @@ class World:
         self.justBattled = False
         self.origin = [1, 1]
         self.map = [[unknown, unknown, unknown], [unknown, start, unknown], [unknown, unknown, unknown]]
-        self.frontier = [ (1, 0), (0, 1) ]
+        self.frontier = [ (-1, 0), (0,-1), (1, 0), (0, 1) ]
         self.goal = None
         self.playerRow = 0
         self.playerCol = 0
