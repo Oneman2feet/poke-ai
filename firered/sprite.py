@@ -13,26 +13,18 @@ class Sprite:
         self.trainerHeight = 24
         self.trainerUp = (self.trainerHeight * 3, 0)
 
-    def isCharacter(self, ob):
-        sames = 0
-        for row in range(self.trainerHeight):
-            for col in range(self.trainerWidth):
-                gameRow = self.trainerRow + row
-                gameCol = self.trainerCol + col
-                imgRow = self.trainerUp[0] + row
-                imgCol = self.trainerUp[1] + col
+    def matchesSprite(self, ob, startRow, startCol, im, spriteRow, spriteCol, spriteWidth, spriteHeight):
+        for row in range(spriteHeight):
+            for col in range(spriteWidth):
+                gameRow = startRow + row
+                gameCol = startCol + col
+                imgRow = spriteRow + row
+                imgCol = spriteCol + col
                 gamePixel = ob[gameRow][gameCol]
-                imgPixel = self.trainer.getpixel((imgCol, imgRow))
-                print((gameRow, gameCol))
-                print(gamePixel)
-                print((imgRow, imgCol))
-                print(imgPixel)
-                same = False
-                if (imgPixel[3]==0):
-                    same = True
-                elif (gamePixel[0]==imgPixel[0] and gamePixel[1]==imgPixel[1] and gamePixel[2]==imgPixel[2]):
-                    same = True
-                print(same)
-                if same:
-                    sames+=1
-        print("done, %d pixels match out of %d" % (sames, self.trainerWidth * self.trainerHeight))
+                imgPixel = im.getpixel((imgCol, imgRow))
+                if (imgPixel[3]!=0 and (gamePixel[0]!=imgPixel[0] or gamePixel[1]!=imgPixel[1] or gamePixel[2]!=imgPixel[2])):
+                    return False
+        return True
+
+    def isCharacterUp(self, ob):
+        return self.matchesSprite(ob, self.trainerRow, self.trainerCol, self.trainer, self.trainerUp[0], self.trainerUp[1], self.trainerWidth, self.trainerHeight)

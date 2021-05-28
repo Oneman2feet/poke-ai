@@ -78,7 +78,7 @@ justMoved = False
 
 
 s = sprite.Sprite()
-s.isCharacter(ob)
+print(s.isCharacterUp(ob))
 
 exit()
 
