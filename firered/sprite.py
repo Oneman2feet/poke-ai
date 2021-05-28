@@ -4,26 +4,23 @@ class Sprite:
 
     def __init__(self):
         # read resource files
-        self.trainer = Image.open('./sprites/trainer.png').convert('RGBA')
+        self.trainer = Image.open('./sprites/trainerresize.png').convert('RGBA')
         #r, g, b, a = trainer.getpixel((0, 0))
         #print((r ,g, b, a))
+        self.trainerWidth = 16
+        self.trainerHeight = 24
+        self.trainerUp = (self.trainerHeight * 3, 0)
 
     def isCharacter(self, ob):
         characterRow = 68
         characterCol = 113
-        spriteRow = 76
-        spriteCol = 1
-        trainerHeight = 18
-        trainerWidth = 14
-        row = 8
-        col = 0
         sames = 0
-        for row in range(trainerHeight):
-            for col in range(trainerWidth):
+        for row in range(self.trainerHeight):
+            for col in range(self.trainerWidth):
                 gameRow = characterRow + row
                 gameCol = characterCol + col
-                imgRow = spriteRow + row
-                imgCol = spriteCol + col
+                imgRow = self.trainerUp[0] + row
+                imgCol = self.trainerUp[1] + col
                 gamePixel = ob[gameRow][gameCol]
                 imgPixel = self.trainer.getpixel((imgCol, imgRow))
                 print((gameRow, gameCol))
@@ -38,4 +35,4 @@ class Sprite:
                 print(same)
                 if same:
                     sames+=1
-        print("done, %d pixels match out of %d" % (sames, trainerWidth * trainerHeight))
+        print("done, %d pixels match out of %d" % (sames, self.trainerWidth * self.trainerHeight))
