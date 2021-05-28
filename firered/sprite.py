@@ -4,21 +4,21 @@ class Sprite:
 
     def __init__(self):
         # read resource files
-        self.trainer = Image.open('./sprites/trainerresize.png').convert('RGBA')
+        self.trainer = Image.open('./sprites/trainer.png').convert('RGBA')
         #r, g, b, a = trainer.getpixel((0, 0))
         #print((r ,g, b, a))
+        self.trainerRow = 64 # position of sprite in game (centered)
+        self.trainerCol = 112 # position of sprite in game (centered)
         self.trainerWidth = 16
         self.trainerHeight = 24
         self.trainerUp = (self.trainerHeight * 3, 0)
 
     def isCharacter(self, ob):
-        characterRow = 68
-        characterCol = 113
         sames = 0
         for row in range(self.trainerHeight):
             for col in range(self.trainerWidth):
-                gameRow = characterRow + row
-                gameCol = characterCol + col
+                gameRow = self.trainerRow + row
+                gameCol = self.trainerCol + col
                 imgRow = self.trainerUp[0] + row
                 imgCol = self.trainerUp[1] + col
                 gamePixel = ob[gameRow][gameCol]
