@@ -42,6 +42,7 @@ class World:
         self.prevX = x
         self.prevY = y
         self.direction = direction
+        self.mapOfMaps = []
         self.reset()
         
     def reset(self, warp=False):
@@ -65,6 +66,14 @@ class World:
             self.frontier = [ self.directionDelta((self.direction + i) % 4) for i in range(4) ]
 
         print(self.frontier)
+
+    def warp(self):
+        # add to map of maps if not trivial in size
+        if (len(self.map) > 3 or len(self.map[0]) > 3):
+            self.mapOfMaps.append(self.map)
+        # start map of new area
+        self.reset(warp=True)
+        self.printMapOfMaps()
         
     # most coordinates are with respect to the player starting position as 0,0
     # first coordinate is always the row and second the column
@@ -74,12 +83,21 @@ class World:
     def fromMap(self, rowCol):
         return (rowCol[0]-self.origin[0], rowCol[1]-self.origin[1])
 
-    def printMap(self):
-        for row in self.map:
+    def printMap(self, map=None):
+        if map==None:
+            map = self.map
+        for row in map:
             print("\n", end =" "),
             for entry in row: 
                 print(entry, end = " "),
         print("\n")
+
+    def printMapOfMaps(self):
+        print("MAP OF MAPS:")
+        for map in self.mapOfMaps:
+            self.printMap(map=map)
+            print("-----------")
+        print("END MAP OF MAPS")
         
     def printMatrix(self, matrix):
         for row in matrix:
@@ -150,7 +168,8 @@ class World:
         while (len(path)<2):
             # mark impossible goal on map
             goalRow, goalCol = self.toMap(self.goal)
-            self.map[goalRow][goalCol] = impossible
+            if (self.map[goalRow][goalCol]!=start and self.map[goalRow][goalCol]!=door):
+                self.map[goalRow][goalCol] = impossible
             # check for traps
             if (len(self.frontier)==0):
                 return empty
@@ -248,7 +267,7 @@ class World:
         deltaRow, deltaCol = self.directionDelta(self.direction)
         pRow, pCol = self.playerRow + deltaRow, self.playerCol + deltaCol
         mapRow, mapCol = self.toMap((pRow, pCol))
-        if (self.map[mapRow][mapCol]!=start):
+        if (self.map[mapRow][mapCol]!=start and self.map[mapRow][mapCol]!=door):
             self.map[mapRow][mapCol] = interactable
         self.removeFrontier(pRow, pCol)
         if (self.isGoal(pRow, pCol)):
@@ -288,7 +307,9 @@ class World:
             print((self.prevX, self.prevY))
             print("actual:")
             print((self.x,self.y))
-            self.reset(warp=True)
+            if (self.x!=self.prevX and self.y!=self.prevY):
+                print("both x and y changed, assuming we warped")
+                self.warp()
         elif (self.shouldInteract):
             self.shouldInteract = False
         elif (self.changingDirection):
@@ -298,9 +319,9 @@ class World:
             if (self.x==expectedX and self.y==expectedY):
                 # remove from frontier
                 self.removeFrontier(pRow, pCol)
-                if (self.map[mapPlayerRow][mapPlayerCol]!=start):
+                if (self.map[mapPlayerRow][mapPlayerCol]!=start and self.map[mapPlayerRow][mapPlayerCol]!=door):
                     self.map[mapPlayerRow][mapPlayerCol] = ground
-                if (self.map[mapRow][mapCol]!=start):
+                if (self.map[mapRow][mapCol]!=start and self.map[mapRow][mapCol]!=door):
                     self.map[mapRow][mapCol] = player
                 self.playerRow = pRow
                 self.playerCol = pCol
@@ -314,9 +335,9 @@ class World:
             #print("moved as expected")
             # remove from frontier
             self.removeFrontier(pRow, pCol)
-            if (self.map[mapPlayerRow][mapPlayerCol]!=start):
+            if (self.map[mapPlayerRow][mapPlayerCol]!=start and self.map[mapPlayerRow][mapPlayerCol]!=door):
                 self.map[mapPlayerRow][mapPlayerCol] = ground
-            if (self.map[mapRow][mapCol]!=start):
+            if (self.map[mapRow][mapCol]!=start and self.map[mapRow][mapCol]!=door):
                 self.map[mapRow][mapCol] = player
             self.playerRow = pRow
             self.playerCol = pCol
@@ -324,7 +345,7 @@ class World:
         elif (self.x==self.prevX and self.y==self.prevY):
             #print("ran into obstacle!")
             # there is a wall where you wanted to go
-            if (self.map[mapRow][mapCol]!=start):
+            if (self.map[mapRow][mapCol]!=start and self.map[mapRow][mapCol]!=door):
                 self.map[mapRow][mapCol] = wall
             # remove this from the frontier
             self.removeFrontier(pRow, pCol)

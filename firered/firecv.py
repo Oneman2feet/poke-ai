@@ -34,6 +34,13 @@ def increment():
         env.render()
     return ob, rew, done, info
 
+# the game takes several frames to respond to input, making this necessary
+def incrementTransition():
+    for _ in range(90): # 15 is the number of frames in a step
+        ob, rew, done, info = env.step(empty)
+        env.render()
+    return ob, rew, done, info
+
 def incrementWalk():
     ob, rew, done, info = increment()
 
@@ -87,6 +94,7 @@ x,y = xy(info)
 world = world.World(x, y, 3) # starting direction is UP
 world.printMap()
 justMoved = False
+justInteracted = False
 
 # sprite detector
 s = sprite.Sprite()
@@ -94,12 +102,12 @@ s = sprite.Sprite()
 
 while True:
     # wait to increment and respond to game
-    input("Press enter for next timestep")
+    #input("Press enter for next timestep")
 
     # increment the game
     ob, rew, done, info = incrementWalk()
 
-    print(s.characterDirection(ob))
+    #print(s.characterDirection(ob))
 
     # update map from move
     if (justMoved and onTile(info)):
@@ -109,40 +117,48 @@ while True:
 
     # determine what mode of the game we are in using vision
     if (vision.dialog(ob) or vision.pc(ob)):
-        print("INTERACTING")
+        if not justInteracted:
+            print("INTERACTING")
+            justInteracted = True
         world.flagInteraction()
         if (vision.pc(ob)):
             print("EXIT PC")
             env.step(bButton)
         else:
             env.step(aButton)
-    elif (vision.battle(ob) or vision.attack(ob)):
-        print("BATTLING")
-        world.flagBattle()
-        if (vision.battledialog(ob)):
-            env.step(aButton)
-        elif (vision.nopp(ob)):
-            # try to find a move with PP
-            env.step(random.choice(directions))
-        else:
-            env.step(aButton)
-    elif (vision.allblack(ob)):
-        print("BLACK SCREEN")
-        env.step(empty)
     else:
-        # walk around world
-        if (onTile(info)):
-            navigate(info)
-            justMoved = True
+        justInteracted = False
+
+        if (vision.battle(ob) or vision.attack(ob)):
+            print("BATTLING")
+            world.flagBattle()
+            if (vision.battledialog(ob)):
+                env.step(aButton)
+            elif (vision.nopp(ob)):
+                # try to find a move with PP
+                env.step(random.choice(directions))
+            else:
+                env.step(aButton)
+        elif (vision.allblack(ob)):
+            print("BLACK SCREEN")
+            if (x==7 and y==0):
+                print("black screen at 7,0 coordinates. will assume a warp")
+                world.warp()
+            ob, rew, done, info = incrementTransition()
+            #env.step(empty)
         else:
-            print('WAITING FOR STEP')
-            print(info['x'])
-            print(info['y'])
-            env.step(empty)
-    
-    # show newest understanding of the world
-    # as of the last move and plans for next move
-    world.printMap()
+            # walk around world
+            if (onTile(info)):
+                navigate(info)
+                justMoved = True
+            else:
+                print('WAITING FOR STEP')
+                print(info['x'])
+                print(info['y'])
+                env.step(empty)
+            # show newest understanding of the world
+            # as of the last move and plans for next move
+            world.printMap()
 
     '''
     if (vision.inside(ob)):
