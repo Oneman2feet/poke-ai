@@ -95,6 +95,7 @@ world = world.World(x, y, 3) # starting direction is UP
 world.printMap()
 justMoved = False
 justInteracted = False
+lastAction = None
 
 # sprite detector
 s = sprite.Sprite()
@@ -117,48 +118,50 @@ while True:
 
     # determine what mode of the game we are in using vision
     if (vision.dialog(ob) or vision.pc(ob)):
-        if not justInteracted:
+        if lastAction!='interaction':
             print("INTERACTING")
-            justInteracted = True
         world.flagInteraction()
         if (vision.pc(ob)):
             print("EXIT PC")
             env.step(bButton)
         else:
             env.step(aButton)
-    else:
-        justInteracted = False
-
-        if (vision.battle(ob) or vision.attack(ob)):
+        lastAction = 'interaction'
+    elif (vision.battle(ob) or vision.attack(ob)):
+        if lastAction!='battle':
             print("BATTLING")
-            world.flagBattle()
-            if (vision.battledialog(ob)):
-                env.step(aButton)
-            elif (vision.nopp(ob)):
-                # try to find a move with PP
-                env.step(random.choice(directions))
-            else:
-                env.step(aButton)
-        elif (vision.allblack(ob)):
-            print("BLACK SCREEN")
-            if (x==7 and y==0):
-                print("black screen at 7,0 coordinates. will assume a warp")
-                world.warp()
-            ob, rew, done, info = incrementTransition()
-            #env.step(empty)
+        world.flagBattle()
+        if (vision.battledialog(ob)):
+            env.step(aButton)
+        elif (vision.nopp(ob)):
+            # try to find a move with PP
+            env.step(random.choice(directions))
         else:
-            # walk around world
-            if (onTile(info)):
-                navigate(info)
-                justMoved = True
-            else:
-                print('WAITING FOR STEP')
-                print(info['x'])
-                print(info['y'])
-                env.step(empty)
-            # show newest understanding of the world
-            # as of the last move and plans for next move
-            world.printMap()
+            env.step(aButton)
+        lastAction = 'battle'
+    elif (vision.allblack(ob)):
+        if lastAction!='black':
+            print("BLACK SCREEN")
+        if (x==7 and y==0):
+            print("black screen at 7,0 coordinates. will assume a warp")
+            world.warp()
+        ob, rew, done, info = incrementTransition()
+        #env.step(empty)
+        lastAction = 'black'
+    else:
+        # walk around world
+        if (onTile(info)):
+            navigate(info)
+            justMoved = True
+        else:
+            print('WAITING FOR STEP')
+            print(info['x'])
+            print(info['y'])
+            env.step(empty)
+        # show newest understanding of the world
+        # as of the last move and plans for next move
+        world.printMap()
+        lastAction = 'move'
 
     '''
     if (vision.inside(ob)):
