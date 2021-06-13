@@ -9,7 +9,7 @@ import sprite
 import vision
     
 # initialize game
-env = retro.make(game='PokemonFireRedVersion-GbAdvance', state='start', record='.')
+env = retro.make(game='PokemonFireRedVersionV11-GbAdvance', state='start', record='.')
 env.reset()
 
 directions = [
@@ -38,9 +38,11 @@ def incrementWalk():
     ob, rew, done, info = increment()
 
     # increment until character direction is observed
-    while(s.characterDirection(ob) == -1):
+    i=15 # up to a maximum extra wait time of 15 frames
+    while(s.characterDirection(ob) == -1 and i>0):
         ob, rew, done, info = env.step(empty)
         env.render()
+        i-=1
 
     return ob, rew, done, info
         
@@ -92,7 +94,7 @@ s = sprite.Sprite()
 
 while True:
     # wait to increment and respond to game
-    #input("Press enter for next timestep")
+    input("Press enter for next timestep")
 
     # increment the game
     ob, rew, done, info = incrementWalk()

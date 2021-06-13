@@ -4,6 +4,9 @@ a bot to play pokemon so you don't have to
 ## Prerequisites
 
 - [Python 3.7](https://www.python.org/downloads/release/python-373)
+  - `python3 --version` confirms your current version
+  - `which python3` shows your PATH
+  - `python3 -m site` shows the location of `site-packages`
 - [Gym Retro](https://retro.readthedocs.io/en/latest/getting_started.html) - `pip3 install gym-retro`
 
 ## Integrating Roms

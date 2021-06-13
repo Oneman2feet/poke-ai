@@ -25,6 +25,7 @@ aButton = [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
 # ASCII tiles for map
 unknown = '/'
 start = 'X'
+door = 'D'
 player = '*'
 wall = '#'
 ground = '.'
@@ -43,16 +44,27 @@ class World:
         self.direction = direction
         self.reset()
         
-    def reset(self):
+    def reset(self, warp=False):
         self.changingDirection = False
         self.shouldInteract = False
         self.justBattled = False
         self.origin = [1, 1]
         self.map = [[unknown, unknown, unknown], [unknown, start, unknown], [unknown, unknown, unknown]]
-        self.frontier = [ (-1, 0), (0,-1), (1, 0), (0, 1) ]
         self.goal = None
         self.playerRow = 0
         self.playerCol = 0
+
+        if warp:
+            # mark door as behind you
+            negDoorDirection = self.directionDelta(self.direction)
+            self.map[1 - negDoorDirection[0]][1 - negDoorDirection[1]] = door
+
+            # populate frontier with other three directions
+            self.frontier = [ self.directionDelta((self.direction + i) % 4) for i in range(1, 4) ]
+        else:
+            self.frontier = [ self.directionDelta((self.direction + i) % 4) for i in range(4) ]
+
+        print(self.frontier)
         
     # most coordinates are with respect to the player starting position as 0,0
     # first coordinate is always the row and second the column
@@ -81,7 +93,7 @@ class World:
             return 1
         elif (item==ground or item==player):
             return 1
-        elif (item==wall or item==interactable or item==start):
+        elif (item==wall or item==interactable or item==start or item==door):
             return 0
         else:
             return -1
@@ -117,7 +129,9 @@ class World:
             return None
 
     def isGoal(self, row, col):
-        return self.goal==None or row==self.goal[0] and col==self.goal[1]
+        if self.goal==None:
+            return False
+        return row==self.goal[0] and col==self.goal[1]
 
     def action(self):
         # press A if we just hit something
@@ -159,16 +173,18 @@ class World:
 
     # convert direction to row,col deltas
     def directionDelta(self, direction):
-        if (self.direction==-1):
+        if (direction==-1):
             return (0, 0)
-        elif (self.direction==0):
+        elif (direction==0):
             return (0, 1)
-        elif (self.direction==1):
+        elif (direction==1):
             return (1, 0)
-        elif (self.direction==2):
+        elif (direction==2):
             return (0, -1)
-        else:
+        elif (direction==3):
             return (-1, 0)
+        else:
+            return None
     
     def addFrontier(self, row, col):
         mapRow, mapCol = self.toMap((row, col))
@@ -236,9 +252,10 @@ class World:
             self.map[mapRow][mapCol] = interactable
         self.removeFrontier(pRow, pCol)
         if (self.isGoal(pRow, pCol)):
-            #print("remove goal:")
-            #print(self.goal)
+            print("remove goal")
+            print(self.goal)
             self.goal = None
+            # todo - pop new goal
         #self.shouldInteract = False
 
     def flagBattle(self):
@@ -271,7 +288,7 @@ class World:
             print((self.prevX, self.prevY))
             print("actual:")
             print((self.x,self.y))
-            self.reset()
+            self.reset(warp=True)
         elif (self.shouldInteract):
             self.shouldInteract = False
         elif (self.changingDirection):

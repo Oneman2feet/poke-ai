@@ -50,7 +50,6 @@ class Sprite:
     def isCharacterRight(self, ob):
         for col in range(1):
             score = self.matchesSprite(ob, self.trainerRow, self.trainerCol, self.trainer, self.trainerRightRow, col * self.trainerWidth, self.trainerWidth, self.trainerHeight)
-            print(score)
             if (score > 170):
                 return True
             return False

@@ -1,3 +1,5 @@
 */__pycache__/*
+*.gba
 *.mp4
 *.bk2
+*.DS_Store
