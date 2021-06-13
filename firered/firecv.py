@@ -4,12 +4,13 @@ import retro
 import time
 import random
 import sys
+import gzip
 import world
 import sprite
 import vision
     
 # initialize game
-env = retro.make(game='PokemonFireRedVersionV11-GbAdvance', state='start', record='.')
+env = retro.make(game='PokemonFireRedVersionV11-GbAdvance', state='lab', record='.')
 env.reset()
 
 directions = [
@@ -26,19 +27,28 @@ empty = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] # empty action
 
 tile = 16 # sixteen pixels in a square
 
+RENDER_TO_SCREEN = True
+
+# save game state to file
+def saveState(env, name="test.state"):
+    content = env.em.get_state()
+    with gzip.open(name, 'wb') as f:
+        f.write(content)
 
 # the game takes several frames to respond to input, making this necessary
 def increment():
     for _ in range(15): # 15 is the number of frames in a step
         ob, rew, done, info = env.step(empty)
-        env.render()
+        if RENDER_TO_SCREEN:
+            env.render()
     return ob, rew, done, info
 
 # the game takes several frames to respond to input, making this necessary
 def incrementTransition():
     for _ in range(90): # 15 is the number of frames in a step
         ob, rew, done, info = env.step(empty)
-        env.render()
+        if RENDER_TO_SCREEN:
+            env.render()
     return ob, rew, done, info
 
 def incrementWalk():
@@ -48,15 +58,11 @@ def incrementWalk():
     i=15 # up to a maximum extra wait time of 15 frames
     while(s.characterDirection(ob) == -1 and i>0):
         ob, rew, done, info = env.step(empty)
-        env.render()
+        if RENDER_TO_SCREEN:
+            env.render()
         i-=1
 
     return ob, rew, done, info
-        
-#def waitForAnimation():
-#    for _ in range(2000):
-#        env.step(empty)
-#        env.render()
 
 def xy(info):
     return ((int)(info['x']/tile), (int)(info['y']/tile))
@@ -101,7 +107,18 @@ lastAction = None
 s = sprite.Sprite()
 
 
+# last save time
+lastSave = time.time()
+
 while True:
+    # save state if enough time has elapsed
+    seconds = time.time()
+    if seconds - lastSave > 120:
+        filename = f"test{int(seconds)}.state" 
+        print("SAVING: " + filename)
+        saveState(env, "states/"+filename)
+        lastSave = seconds
+
     # wait to increment and respond to game
     #input("Press enter for next timestep")
 
