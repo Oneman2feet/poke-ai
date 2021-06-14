@@ -262,6 +262,12 @@ class World:
             self.addFrontier(self.playerRow, self.playerCol-1)
             self.addFrontier(self.playerRow, self.playerCol+1)
             self.addFrontier(self.playerRow-1, self.playerCol) # current direction added last
+        else:
+            # default behavior is to try expanding in all directions
+            self.expandMap(0)
+            self.expandMap(1)
+            self.expandMap(2)
+            self.expandMap(3)
 
     def flagInteraction(self):
         deltaRow, deltaCol = self.directionDelta(self.direction)
@@ -288,6 +294,24 @@ class World:
             if (self.map[mapRow][mapCol]==wall):
                 self.map[mapRow][mapCol] = unknown
 
+    def movePlayer(self, pRow, pCol, direction):
+        # player before and after coordinates in map space
+        mapPlayerRow, mapPlayerCol = self.toMap((self.playerRow, self.playerCol))
+        mapRow, mapCol = self.toMap((pRow, pCol))
+
+        # remove player from old location
+        if (self.map[mapPlayerRow][mapPlayerCol]!=start and self.map[mapPlayerRow][mapPlayerCol]!=door):
+            self.map[mapPlayerRow][mapPlayerCol] = ground
+
+        # add player to new location
+        if (self.map[mapRow][mapCol]!=start and self.map[mapRow][mapCol]!=door):
+            self.map[mapRow][mapCol] = player
+        self.playerRow = pRow
+        self.playerCol = pCol
+
+        # check for map expansion
+        self.expandMap(direction)
+
     def update(self, x, y):
         print("update with x,y = %d,%d" % (x,y))
         deltaRow, deltaCol = self.directionDelta(self.direction)
@@ -310,6 +334,16 @@ class World:
             if (self.x!=self.prevX and self.y!=self.prevY):
                 print("both x and y changed, assuming we warped")
                 self.warp()
+            else:
+                changeX = self.x-self.prevX
+                changeY = self.y-self.prevY
+                # check for jumped over a hump. X or Y has changed by 2
+                if (changeX==0 and abs(changeY)==2):
+                    self.movePlayer(self.playerRow+changeY, self.playerCol)
+                elif (changeY==0 and abs(changeX)==2):
+                    self.movePlayer(self.playerRow, self.playerCol+changeX)
+                else:
+                    print("didn't consider this a warp or a hump")
         elif (self.shouldInteract):
             self.shouldInteract = False
         elif (self.changingDirection):

@@ -10,7 +10,7 @@ import sprite
 import vision
     
 # initialize game
-env = retro.make(game='PokemonFireRedVersionV11-GbAdvance', state='newmove', record='.')
+env = retro.make(game='PokemonFireRedVersionV11-GbAdvance', state='test1623703868', record='.')
 env.reset()
 
 rightButton = [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0]
@@ -75,7 +75,7 @@ def xy(info):
 def onTile(info):
     x = (int)(info['x'])
     y = (int)(info['y'])
-    return x%tile==startX%tile and y%tile==startY%tile
+    return x%tile==8 and y%tile==0
 
 # use world.py to walk around
 def navigate(info):
