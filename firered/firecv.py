@@ -125,7 +125,7 @@ while True:
         lastSave = seconds
 
     # wait to increment and respond to game
-    #input("Press enter for next timestep")
+    input("Press enter for next timestep")
 
     # increment the game
     ob, rew, done, info = incrementWalk()
@@ -153,7 +153,15 @@ while True:
         if lastAction!='battle':
             print("BATTLING")
         world.flagBattle()
-        if (vision.newmove(ob)):
+        if (vision.runaway(ob)):
+            # manually go to the run option and select it
+            print("RUNNING AWAY")
+            env.step(downButton)
+            increment()
+            env.step(rightButton)
+            increment()
+            env.step(aButton)
+        elif (vision.newmove(ob)):
             env.step(downButton)
         elif (vision.battledialog(ob)):
             env.step(aButton)

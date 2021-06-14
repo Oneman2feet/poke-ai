@@ -3,3 +3,4 @@
 *.mp4
 *.bk2
 *.DS_Store
+*test*.state

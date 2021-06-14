@@ -6,8 +6,9 @@ black = [0, 0, 0]
 white = [248, 248, 248]
 blue = [40, 80, 104]
 grey = [112, 104, 128]
-red = [232, 0, 0]
-newmovered = [224, 56, 0]
+bluegrey = [112, 104, 128]
+orange = [232, 0, 0]
+red = [224, 56, 0]
 
 def sameColor(a, b):
     return a[0]==b[0] and a[1]==b[1] and a[2]==b[2]
@@ -58,12 +59,18 @@ def pc(ob):
 
 def nopp(ob):
     for i in range(127, 132):
-        if (not sameColor(ob[i][168], red)):
+        if (not sameColor(ob[i][168], orange)):
             return False
     return True
 
-def newmove(ob):                                      #KYLE
-    for i in range(125, 225):                         #KYLE
-        if (not sameColor(ob[18][i], newmovered)):    #KYLE
-            return False                              #KYLE
-    return True                                       #KYLE
+def newmove(ob):                                #KYLE
+    for i in range(125, 225):                   #KYLE
+        if (not sameColor(ob[18][i], red)):     #KYLE
+            return False                        #KYLE
+    return True                                 #KYLE
+
+def runaway(ob):
+    for i in range(116, 156):
+        if (not sameColor(ob[i][124], bluegrey)):
+            return False
+    return True
