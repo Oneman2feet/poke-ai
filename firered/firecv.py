@@ -10,14 +10,19 @@ import sprite
 import vision
     
 # initialize game
-env = retro.make(game='PokemonFireRedVersionV11-GbAdvance', state='lab', record='.')
+env = retro.make(game='PokemonFireRedVersionV11-GbAdvance', state='newmove', record='.')
 env.reset()
 
+rightButton = [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0]
+downButton =  [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0]
+leftButton =  [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
+upButton =    [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
+
 directions = [
-    [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0], # move right
-    [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0], # move down
-    [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0], # move left
-    [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]  # move up
+    rightButton,
+    downButton,
+    leftButton,
+    upButton
 ]
 
 aButton = [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
@@ -144,11 +149,13 @@ while True:
         else:
             env.step(aButton)
         lastAction = 'interaction'
-    elif (vision.battle(ob) or vision.attack(ob)):
+    elif (vision.battle(ob) or vision.attack(ob) or vision.newmove(ob)):
         if lastAction!='battle':
             print("BATTLING")
         world.flagBattle()
-        if (vision.battledialog(ob)):
+        if (vision.newmove(ob)):
+            env.step(downButton)
+        elif (vision.battledialog(ob)):
             env.step(aButton)
         elif (vision.nopp(ob)):
             # try to find a move with PP
