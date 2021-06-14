@@ -10,7 +10,7 @@ import sprite
 import vision
     
 # initialize game
-env = retro.make(game='PokemonFireRedVersionV11-GbAdvance', state='test1623703868', record='.')
+env = retro.make(game='PokemonFireRedVersionV11-GbAdvance', state='firstbattle', record='.')
 env.reset()
 
 rightButton = [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0]
@@ -125,7 +125,7 @@ while True:
         lastSave = seconds
 
     # wait to increment and respond to game
-    input("Press enter for next timestep")
+    #input("Press enter for next timestep")
 
     # increment the game
     ob, rew, done, info = incrementWalk()
@@ -154,13 +154,22 @@ while True:
             print("BATTLING")
         world.flagBattle()
         if (vision.runaway(ob)):
-            # manually go to the run option and select it
-            print("RUNNING AWAY")
-            env.step(downButton)
-            increment()
-            env.step(rightButton)
-            increment()
-            env.step(aButton)
+            if (vision.alreadyran(ob)):
+                # go to fight
+                print("WILL FIGHT")
+                env.step(upButton)
+                increment()
+                env.step(leftButton)
+                increment()
+                env.step(aButton)
+            else:
+                # manually go to the run option and select it
+                print("RUNNING AWAY")
+                env.step(downButton)
+                increment()
+                env.step(rightButton)
+                increment()
+                env.step(aButton)
         elif (vision.newmove(ob)):
             env.step(downButton)
         elif (vision.battledialog(ob)):
