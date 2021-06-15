@@ -10,7 +10,7 @@ import sprite
 import vision
     
 # initialize game
-env = retro.make(game='PokemonFireRedVersionV11-GbAdvance', state='firstbattle', record='.')
+env = retro.make(game='PokemonFireRedVersionV11-GbAdvance', state='hump', record='.')
 env.reset()
 
 rightButton = [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0]
@@ -125,7 +125,7 @@ while True:
         lastSave = seconds
 
     # wait to increment and respond to game
-    #input("Press enter for next timestep")
+    input("Press enter for next timestep")
 
     # increment the game
     ob, rew, done, info = incrementWalk()

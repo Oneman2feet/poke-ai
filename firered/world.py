@@ -219,55 +219,59 @@ class World:
         if (self.goal!=None and self.goal[0]==row and self.goal[1]==col):
             self.goal = None
     
-    def expandMap(self, direction):
+    def expandMap(self, distance, direction):
         # convert to map coordinates
         mapPlayerRow, mapPlayerCol = self.toMap((self.playerRow, self.playerCol))
         if (self.direction==0):
-            if (mapPlayerCol==len(self.map[0])-1):
-                # add element at end of each row
+            if (mapPlayerCol >= len(self.map[0]) - 1):
+                # add element(s) at end of each row
                 for row in self.map:
-                    row.append(unknown)
+                    for _ in range(distance):
+                        row.append(unknown)
                 # player position does not change
             # add up, right, down to frontier if not already visited
             self.addFrontier(self.playerRow-1, self.playerCol)
             self.addFrontier(self.playerRow+1, self.playerCol)
             self.addFrontier(self.playerRow, self.playerCol+1) # current direction added last
         elif (self.direction==1):
-            if (mapPlayerRow==len(self.map)-1):
-                # add new row at end
-                self.map.append([unknown]*len(self.map[0]))
+            if (mapPlayerRow >= len(self.map) - 1):
+                # add new row(s) at end
+                for _ in range(distance):
+                    self.map.append([unknown]*len(self.map[0]))
                 # player position does not change
             # add left, down, right to frontier if not already visited
             self.addFrontier(self.playerRow, self.playerCol-1)
             self.addFrontier(self.playerRow, self.playerCol+1)
             self.addFrontier(self.playerRow+1, self.playerCol) # current direction added last
         elif (self.direction==2):
-            if (mapPlayerCol==0):
-                # add element at start of each row
+            if (mapPlayerCol <= 0):
+                # add element(s) at start of each row
                 for row in self.map:
-                    row.insert(0, unknown)
-                # shift map origin column by one
-                self.origin[1] += 1
+                    for _ in range(distance):
+                        row.insert(0, unknown)
+                # shift map origin column by distance
+                self.origin[1] += distance
             # add up, left, down to frontier if not already visited
             self.addFrontier(self.playerRow-1, self.playerCol)
             self.addFrontier(self.playerRow+1, self.playerCol)
             self.addFrontier(self.playerRow, self.playerCol-1) # current direction added last
         elif (self.direction==3):
-            if (mapPlayerRow==0):
-                # add new row at beginning
-                self.map.insert(0, [unknown]*len(self.map[0]))
-                # shift map origin row by one
-                self.origin[0] += 1
+            if (mapPlayerRow <= 0):
+                # add new row(s) at beginning
+                for _ in range(distance):
+                    self.map.insert(0, [unknown]*len(self.map[0]))
+                # shift map origin row by distance
+                self.origin[0] += distance
             # add left, up, right to frontier if not already visited
             self.addFrontier(self.playerRow, self.playerCol-1)
             self.addFrontier(self.playerRow, self.playerCol+1)
             self.addFrontier(self.playerRow-1, self.playerCol) # current direction added last
         else:
             # default behavior is to try expanding in all directions
-            self.expandMap(0)
-            self.expandMap(1)
-            self.expandMap(2)
-            self.expandMap(3)
+            self.expandMap(distance, 0)
+            self.expandMap(distance, 1)
+            self.expandMap(distance, 2)
+            self.expandMap(distance, 3)
 
     def flagInteraction(self):
         deltaRow, deltaCol = self.directionDelta(self.direction)
@@ -294,10 +298,17 @@ class World:
             if (self.map[mapRow][mapCol]==wall):
                 self.map[mapRow][mapCol] = unknown
 
-    def movePlayer(self, pRow, pCol, direction):
+    def movePlayer(self, pRow, pCol, distance=1, direction=None):
         # player before and after coordinates in map space
         mapPlayerRow, mapPlayerCol = self.toMap((self.playerRow, self.playerCol))
         mapRow, mapCol = self.toMap((pRow, pCol))
+
+        # set new player location
+        self.playerRow = pRow
+        self.playerCol = pCol
+
+        # check for map expansion
+        self.expandMap(distance, direction)
 
         # remove player from old location
         if (self.map[mapPlayerRow][mapPlayerCol]!=start and self.map[mapPlayerRow][mapPlayerCol]!=door):
@@ -306,11 +317,6 @@ class World:
         # add player to new location
         if (self.map[mapRow][mapCol]!=start and self.map[mapRow][mapCol]!=door):
             self.map[mapRow][mapCol] = player
-        self.playerRow = pRow
-        self.playerCol = pCol
-
-        # check for map expansion
-        self.expandMap(direction)
 
     def update(self, x, y):
         print("update with x,y = %d,%d" % (x,y))
@@ -337,11 +343,13 @@ class World:
             else:
                 changeX = self.x-self.prevX
                 changeY = self.y-self.prevY
+                print(f"changeX = {changeX}")
+                print(f"changeY = {changeY}")
                 # check for jumped over a hump. X or Y has changed by 2
                 if (changeX==0 and abs(changeY)==2):
-                    self.movePlayer(self.playerRow+changeY, self.playerCol)
+                    self.movePlayer(self.playerRow-changeY, self.playerCol, distance=2) # row decreases when Y increases
                 elif (changeY==0 and abs(changeX)==2):
-                    self.movePlayer(self.playerRow, self.playerCol+changeX)
+                    self.movePlayer(self.playerRow, self.playerCol+changeX, distance=2)
                 else:
                     print("didn't consider this a warp or a hump")
         elif (self.shouldInteract):
@@ -359,7 +367,7 @@ class World:
                     self.map[mapRow][mapCol] = player
                 self.playerRow = pRow
                 self.playerCol = pCol
-                self.expandMap(self.direction) # add a row/column based on movement
+                self.expandMap(1, self.direction) # add a row/column based on movement
         elif (self.justBattled):
             self.justBattled = False        
         elif (self.x==expectedX and self.y==expectedY):
@@ -375,7 +383,7 @@ class World:
                 self.map[mapRow][mapCol] = player
             self.playerRow = pRow
             self.playerCol = pCol
-            self.expandMap(self.direction) # add a row/column based on movement
+            self.expandMap(1, self.direction) # add a row/column based on movement
         elif (self.x==self.prevX and self.y==self.prevY):
             #print("ran into obstacle!")
             # there is a wall where you wanted to go
